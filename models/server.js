@@ -4,6 +4,7 @@ import Http from 'http';
 import cors from 'cors';
 
 import { connectBD } from '../database/connection';
+import { UserRouter, CompanyRouter, AddressRouter } from '../routes';
 
 export default class Server {
   constructor() {
@@ -11,7 +12,11 @@ export default class Server {
     this.port = process.env.PORT;
     this.server = Http.createServer(this.app);
 
-    this.paths = {};
+    this.paths = {
+      users: '/api/users',
+      companies: '/api/companies',
+      addresses: '/api/addresses',
+    };
 
     // BD Connectionb
     this.initializeBD();
@@ -45,7 +50,11 @@ export default class Server {
     this.app.use(expStatic('public'));
   }
 
-  routes() {}
+  routes() {
+    this.app.use(this.paths.users, UserRouter);
+    this.app.use(this.paths.companies, CompanyRouter);
+    this.app.use(this.paths.addresses, AddressRouter);
+  }
 
   listen() {
     this.server.listen(this.port, () => console.log('Server Running on:', this.port));
