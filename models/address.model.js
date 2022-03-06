@@ -18,6 +18,12 @@ const AddressSchema = Mongoose.Schema(
       type: String,
       required: true,
     },
+    users: [
+      {
+        type: Mongoose.Schema.Types.ObjectId,
+        ref: 'users',
+      },
+    ],
   },
   { timestamps: true }
 );

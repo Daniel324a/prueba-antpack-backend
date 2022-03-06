@@ -1,21 +1,28 @@
-import Users from '../models/user.model.js';
 import Mongoose from 'mongoose';
 
-const {
-  Types: { ObjectId },
-} = Mongoose;
+import { UserModel, AddressModel, CompanyModel } from '../models';
+
+const ObjectId = Mongoose.Types.ObjectId;
 
 export const getUsers = async (req, res) => {
+  // Get search value
   const { search = /.*/ } = req.query;
 
+  // Regex to ignore caps
   const regex = new RegExp(search, 'i');
 
+  // Filter query
   const query = {
     $or: [{ name: regex }, { email: regex }, { username: regex }],
   };
 
-  const [count, users] = await Promise.all([Users.countDocuments(query), Users.find(query).sort('name')]);
+  // Get users and users count
+  const [count, users] = await Promise.all([
+    UserModel.countDocuments(query),
+    UserModel.find(query).populate('company', '-users').populate('address', '-users').sort('name'),
+  ]);
 
+  // Response to client
   res.json({
     ok: true,
     count,
@@ -24,13 +31,19 @@ export const getUsers = async (req, res) => {
 };
 
 export const getUserByID = async (req, res) => {
+  // Get user ID
   const id = req.params.id;
+
+  // Check ID
   if (!ObjectId.isValid(id)) return res.status(400).json({ msg: 'Not received a valid ID' });
 
-  const user = await Users.findById(id);
+  // Get user
+  const user = await UserModel.findById(id).populate('company').populate('address');
 
+  // Check if user exist
   if (!user) return res.status(404).json({ msg: 'User not found' });
 
+  // Response to client
   res.json({
     ok: true,
     user,
@@ -38,11 +51,30 @@ export const getUserByID = async (req, res) => {
 };
 
 export const postUser = async (req, res) => {
-  const user = new Users(req.body);
+  // Create new user object
+  const user = new UserModel(req.body);
 
-  user.save((err, user) => {
+  // Get selected address and company
+  const address = await AddressModel.findById(user.address);
+  const company = await CompanyModel.findById(user.company);
+
+  // Insert user into address and company object
+  address.users.push(user._id);
+  company.users.push(user._id);
+
+  // Save user
+  user.save(async (err, user) => {
+    // Update selected address and company
+    try {
+      await address.save();
+      await company.save();
+    } catch (err) {
+      if (err) return res.status(400).json({ msg: err.message, errors: err.errors });
+    }
+
     if (err) return res.status(400).json({ msg: err.message, errors: err.errors });
 
+    // Response to client
     res.json({
       ok: true,
       user,
@@ -51,16 +83,20 @@ export const postUser = async (req, res) => {
 };
 
 export const putUser = async (req, res) => {
+  // Destructure update data
   const {
     params: { id },
     body,
   } = req;
 
+  // Check ID
   if (!ObjectId.isValid(id)) return res.status(400).json({ msg: 'Not received a valid ID' });
 
-  Users.findByIdAndUpdate(id, body, (err, user) => {
+  // Update user
+  UserModel.findByIdAndUpdate(id, body, (err, user) => {
     if (err) return res.status(400).json({ msg: err.message, errors: err.errors });
 
+    // Response to client
     res.json({
       ok: true,
       user,
@@ -69,12 +105,17 @@ export const putUser = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
+  // Get user ID
   const id = req.params.id;
+
+  // Check ID
   if (!ObjectId.isValid(id)) return res.status(400).json({ msg: 'Not received a valid ID' });
 
-  Users.findByIdAndDelete(id, (err, user) => {
+  // Delete user
+  UserModel.findByIdAndDelete(id, (err, user) => {
     if (err) return res.status(400).json({ msg: err.message, errors: err.errors });
 
+    // Response to client
     res.json({ user, ok: true });
   });
 };

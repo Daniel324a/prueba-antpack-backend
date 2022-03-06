@@ -19,12 +19,12 @@ const UserSchema = Mongoose.Schema(
       required: true,
     },
     address: {
-      type: Mongoose.Types.ObjectId,
+      type: Mongoose.Schema.Types.ObjectId,
       ref: 'addresses',
       required: true,
     },
     company: {
-      type: Mongoose.Types.ObjectId,
+      type: Mongoose.Schema.Types.ObjectId,
       ref: 'companies',
       required: true,
     },
