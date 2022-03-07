@@ -64,7 +64,7 @@ export const postUser = async (req, res) => {
   company.users.push(user._id);
 
   // Generate Gravatar
-  const gravatar = Gravatar.url(user.email, { s: '512', p: true }, true);
+  const gravatar = Gravatar.url(user.email, { s: '1024', p: true }, true);
 
   // Insert gravatar into user object
   user.gravatar = gravatar;
