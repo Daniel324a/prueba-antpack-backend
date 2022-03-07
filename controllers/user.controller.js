@@ -1,4 +1,5 @@
 import Mongoose from 'mongoose';
+import Gravatar from 'gravatar';
 
 import { UserModel, AddressModel, CompanyModel } from '../models';
 
@@ -61,6 +62,12 @@ export const postUser = async (req, res) => {
   // Insert user into address and company object
   address.users.push(user._id);
   company.users.push(user._id);
+
+  // Generate Gravatar
+  const gravatar = Gravatar.url(user.email, { s: '512', p: true }, true);
+
+  // Insert gravatar into user object
+  user.gravatar = gravatar;
 
   // Save user
   user.save(async (err, user) => {

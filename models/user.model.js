@@ -32,6 +32,10 @@ const UserSchema = Mongoose.Schema(
       type: String,
       required: true,
     },
+    gravatar: {
+      type: String,
+      unique: true,
+    },
   },
   { timestamps: true }
 );
