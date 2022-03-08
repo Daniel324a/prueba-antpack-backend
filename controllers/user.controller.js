@@ -119,8 +119,16 @@ export const deleteUser = async (req, res) => {
   if (!ObjectId.isValid(id)) return res.status(400).json({ msg: 'Not received a valid ID' });
 
   // Delete user
-  UserModel.findByIdAndDelete(id, (err, user) => {
+  UserModel.findByIdAndDelete(id, async (err, user) => {
     if (err) return res.status(400).json({ msg: err.message, errors: err.errors });
+
+    // Remove user from his address and company
+    await AddressModel.findByIdAndUpdate(user.address, {
+      $pull: { users: id },
+    });
+    await CompanyModel.findByIdAndUpdate(user.company, {
+      $pull: { users: id },
+    });
 
     // Response to client
     res.json({ user, ok: true });
